@@ -1,98 +1,244 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import * as Speech from "expo-speech";
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [inputText, setInputText] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const translateText = () => {
+    const cleanText = inputText.trim().toLowerCase();
+    let result = "";
+
+    if (cleanText === "hello") {
+      result = "xin chào";
+    } else if (cleanText === "goodbye" || cleanText === "good bye") {
+      result = "tạm biệt";
+    } else if (cleanText === "thank you") {
+      result = "cảm ơn";
+    } else if (cleanText.length === 0) {
+      result = "Please enter text to translate";
+    } else {
+      result = "Translation not found";
+    }
+
+    setTranslatedText(result);
+
+    if (cleanText.length > 0) {
+      setHistory([`${inputText.trim()} → ${result}`, ...history]);
+    }
+  };
+
+  const speakText = () => {
+    if (translatedText.length > 0) {
+      Speech.speak(translatedText, {
+        language: "vi",
+      });
+    }
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+  };
+
+  return (
+    <View style={styles.page}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Translator App</Text>
+        <Text style={styles.subtitle}>
+          English to Vietnamese translation prototype
+        </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Enter text</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Type English text here..."
+          placeholderTextColor="#8a8f98"
+          value={inputText}
+          onChangeText={setInputText}
+          multiline
+        />
+
+        <Pressable style={styles.primaryButton} onPress={translateText}>
+          <Text style={styles.primaryButtonText}>Translate</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Translation result</Text>
+        <View style={styles.resultBox}>
+          <Text style={styles.resultText}>
+            {translatedText || "Your translated text will appear here."}
+          </Text>
+        </View>
+
+        <Pressable style={styles.secondaryButton} onPress={speakText}>
+          <Text style={styles.secondaryButtonText}>Speak Translation</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.sectionTitle}>Translation History</Text>
+          <Pressable onPress={clearHistory}>
+            <Text style={styles.clearText}>Clear</Text>
+          </Pressable>
+        </View>
+
+        {history.length === 0 ? (
+          <Text style={styles.emptyHistory}>No translations yet.</Text>
+        ) : (
+          history.map((item, index) => (
+            <View key={index} style={styles.historyItem}>
+              <Text style={styles.historyText}>{item}</Text>
+            </View>
+          ))
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  page: {
+    flex: 1,
+    backgroundColor: "#ffffff",
   },
-  stepContainer: {
-    gap: 8,
+
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    backgroundColor: "#e8f1ff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#c8d7ef",
+  },
+
+  title: {
+    color: "#111827",
+    fontSize: 30,
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  subtitle: {
+    color: "#374151",
+    fontSize: 15,
+    textAlign: "center",
+  },
+
+  content: {
+    padding: 16,
+  },
+
+  card: {
+    backgroundColor: "#f9fafb",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#111827",
+    marginBottom: 10,
+  },
+
+  input: {
+    minHeight: 90,
+    borderWidth: 1,
+    borderColor: "#cccccc",
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    fontSize: 16,
+    color: "#111827",
+    textAlignVertical: "top",
+  },
+
+  primaryButton: {
+    backgroundColor: "#2f80ed",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  primaryButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  resultBox: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 65,
+    justifyContent: "center",
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+
+  resultText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: "#2f80ed",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+  },
+
+  secondaryButtonText: {
+    color: "#2f80ed",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  historyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  clearText: {
+    color: "#dc2626",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  emptyHistory: {
+    color: "#6b7280",
+    fontSize: 16,
+    paddingVertical: 12,
+  },
+
+  historyItem: {
+    backgroundColor: "#ffffff",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+
+  historyText: {
+    fontSize: 16,
+    color: "#111827",
   },
 });
