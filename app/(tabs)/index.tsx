@@ -1,33 +1,59 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-
 import * as Speech from "expo-speech";
+import React, { useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function HomeScreen() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [history, setHistory] = useState<string[]>([]);
 
-  const translateText = () => {
-    const cleanText = inputText.trim().toLowerCase();
-    let result = "";
+  const translateText = async () => {
+    const cleanText = inputText.trim();
 
-    if (cleanText === "hello") {
-      result = "xin chào";
-    } else if (cleanText === "goodbye" || cleanText === "good bye") {
-      result = "tạm biệt";
-    } else if (cleanText === "thank you") {
-      result = "cảm ơn";
-    } else if (cleanText.length === 0) {
-      result = "Please enter text to translate";
-    } else {
-      result = "Translation not found";
+    if (cleanText.length === 0) {
+      setTranslatedText("Please enter text to translate....");
+      return;
     }
 
-    setTranslatedText(result);
+    setTranslatedText("Translate loading...");
 
-    if (cleanText.length > 0) {
-      setHistory([`${inputText.trim()} → ${result}`, ...history]);
+    try {
+      const query = new URLSearchParams({
+        q: cleanText,
+        langpair: "en|vi",
+      });
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?${query}`,
+      );
+      const data = await response.json();
+      console.log("MyMemory response:", data);
+
+      if (response.ok && data.responseStatus === 200) {
+        const result = data.responseData?.translatedText;
+
+        if (!result) {
+          setTranslatedText("Translation failed. Please try again.");
+          return;
+        }
+
+        setTranslatedText(result);
+
+        setHistory((oldHistory) => [`${cleanText} → ${result}`, ...oldHistory]);
+      } else {
+        setTranslatedText(
+          data.responseDetails || "Translation failed. Please try again.",
+        );
+      }
+    } catch (error) {
+      console.error("Translation error:", error);
+      setTranslatedText("An error occurred. Please try again.");
     }
   };
 
@@ -44,11 +70,16 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.page}>
+    <ScrollView
+      style={styles.page}
+      contentContainerStyle={styles.pageContent}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={true}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Translator App</Text>
         <Text style={styles.subtitle}>
-          English to Vietnamese translation prototype
+          English to Vietnamese translation with speech for Vietnamese version
         </Text>
       </View>
 
@@ -57,7 +88,7 @@ export default function HomeScreen() {
         <TextInput
           style={styles.input}
           placeholder="Type English text here..."
-          placeholderTextColor="#8a8f98"
+          placeholderTextColor="gray"
           value={inputText}
           onChangeText={setInputText}
           multiline
@@ -89,46 +120,54 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {history.length === 0 ? (
-          <Text style={styles.emptyHistory}>No translations yet.</Text>
-        ) : (
-          history.map((item, index) => (
-            <View key={index} style={styles.historyItem}>
-              <Text style={styles.historyText}>{item}</Text>
-            </View>
-          ))
-        )}
+        <ScrollView
+          style={styles.historyScroll}
+          showsVerticalScrollIndicator={true}
+        >
+          {history.length === 0 ? (
+            <Text style={styles.emptyHistory}>No translations yet.</Text>
+          ) : (
+            history.map((item, index) => (
+              <View key={index} style={styles.historyItem}>
+                <Text style={styles.historyText}>{item}</Text>
+              </View>
+            ))
+          )}
+        </ScrollView>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
+  },
+
+  pageContent: {
+    paddingBottom: 30,
   },
 
   header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    backgroundColor: "#e8f1ff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#c8d7ef",
+    paddingTop: 80,
+    paddingHorizontal: 30,
+    paddingBottom: 30,
+    backgroundColor: "lightblue",
+    borderBottomWidth: 2,
+    borderBottomColor: "white",
   },
 
   title: {
-    color: "#111827",
-    fontSize: 30,
-    fontWeight: "bold",
+    color: "black",
+    fontSize: 40,
     textAlign: "center",
     marginBottom: 8,
   },
 
   subtitle: {
-    color: "#374151",
-    fontSize: 15,
+    color: "black",
+    fontSize: 20,
     textAlign: "center",
   },
 
@@ -137,75 +176,73 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "#f9fafb",
+    backgroundColor: "white",
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "white",
   },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111827",
+    color: "black",
     marginBottom: 10,
   },
 
   input: {
     minHeight: 90,
     borderWidth: 1,
-    borderColor: "#cccccc",
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-    fontSize: 16,
-    color: "#111827",
-    textAlignVertical: "top",
+    fontSize: 20,
+    color: "black",
   },
 
   primaryButton: {
-    backgroundColor: "#2f80ed",
+    backgroundColor: "black",
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
   },
 
   primaryButtonText: {
-    color: "#ffffff",
+    color: "white",
     fontSize: 16,
     fontWeight: "bold",
   },
 
   resultBox: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
     borderRadius: 8,
     padding: 12,
-    minHeight: 65,
+    minHeight: 50,
     justifyContent: "center",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "lightgray",
   },
 
   resultText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#111827",
+    color: "black",
   },
 
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#2f80ed",
+    borderColor: "white",
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "black",
   },
 
   secondaryButtonText: {
-    color: "#2f80ed",
+    color: "white",
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -217,28 +254,33 @@ const styles = StyleSheet.create({
   },
 
   clearText: {
-    color: "#dc2626",
+    color: "red",
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: 16,
   },
 
   emptyHistory: {
-    color: "#6b7280",
+    color: "gray",
     fontSize: 16,
     paddingVertical: 12,
   },
 
+  historyScroll: {
+    maxHeight: 220,
+    marginTop: 6,
+  },
+
   historyItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "lightgray",
   },
 
   historyText: {
     fontSize: 16,
-    color: "#111827",
+    color: "black",
   },
 });
