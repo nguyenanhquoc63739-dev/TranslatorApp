@@ -30,7 +30,7 @@ export default function SettingScreen() {
               styles.themeButton,
               {
                 backgroundColor:
-                  theme === "light" ? currentTheme.button : "#cccccc",
+                  theme === "light" ? currentTheme.button : "white",
               },
             ]}
             onPress={() => setTheme("light")}

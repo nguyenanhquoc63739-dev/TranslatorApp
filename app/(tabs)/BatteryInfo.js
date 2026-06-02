@@ -2,7 +2,7 @@ import {
   BatteryState,
   useBatteryLevel,
   useBatteryState,
-  useLowPowerMode
+  useLowPowerMode,
 } from "expo-battery";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 12,
     borderRadius: 12,
-    backgroundColor: "bluewhite",
+    backgroundColor: "#f5f7fa",
   },
   title: {
     fontSize: 18,

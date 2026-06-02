@@ -4,6 +4,7 @@ export const Colors = {
     card: "#f2f2f2",
     text: "#000000",
     button: "#4A90E2",
+    borderColor: "dcdcdc",
   },
 
   dark: {
@@ -11,6 +12,7 @@ export const Colors = {
     card: "#1e1e1e",
     text: "#ffffff",
     button: "#6CA8FF",
+    borderColor: "#444444",
   },
 };
 
