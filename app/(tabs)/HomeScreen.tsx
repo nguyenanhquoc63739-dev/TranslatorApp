@@ -8,11 +8,15 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppTheme } from "../../components/AppThemeContext";
 
 export default function HomeScreen() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
   const [history, setHistory] = useState<string[]>([]);
+  const insets = useSafeAreaInsets();
+  const { currentTheme } = useAppTheme();
 
   const translateText = async () => {
     const cleanText = inputText.trim();
@@ -71,50 +75,126 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={styles.page}
-      contentContainerStyle={styles.pageContent}
+      style={[styles.page, { backgroundColor: currentTheme.background }]}
+      contentContainerStyle={[
+        styles.pageContent,
+        {
+          paddingTop: insets.top + 28,
+          paddingBottom: insets.bottom + 24,
+        },
+      ]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={true}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Translator App</Text>
-        <Text style={styles.subtitle}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: currentTheme.card,
+            borderColor: currentTheme.border,
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: currentTheme.text }]}>
+          Translator App
+        </Text>
+        <Text style={[styles.subtitle, { color: currentTheme.mutedText }]}>
           English to Vietnamese translation with speech for Vietnamese version
         </Text>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Enter text</Text>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: currentTheme.card,
+            borderColor: currentTheme.border,
+          },
+        ]}
+      >
+        <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          Enter text
+        </Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: currentTheme.background,
+              borderColor: currentTheme.border,
+              color: currentTheme.text,
+            },
+          ]}
           placeholder="Type English text here..."
-          placeholderTextColor="gray"
+          placeholderTextColor={currentTheme.placeholder}
           value={inputText}
           onChangeText={setInputText}
           multiline
         />
 
-        <Pressable style={styles.primaryButton} onPress={translateText}>
+        <Pressable
+          style={[
+            styles.primaryButton,
+            { backgroundColor: currentTheme.button },
+          ]}
+          onPress={translateText}
+        >
           <Text style={styles.primaryButtonText}>Translate</Text>
         </Pressable>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Translation result</Text>
-        <View style={styles.resultBox}>
-          <Text style={styles.resultText}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: currentTheme.card,
+            borderColor: currentTheme.border,
+          },
+        ]}
+      >
+        <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          Translation result
+        </Text>
+        <View
+          style={[
+            styles.resultBox,
+            {
+              backgroundColor: currentTheme.background,
+              borderColor: currentTheme.border,
+            },
+          ]}
+        >
+          <Text style={[styles.resultText, { color: currentTheme.text }]}>
             {translatedText || "Your translated text will appear here."}
           </Text>
         </View>
 
-        <Pressable style={styles.secondaryButton} onPress={speakText}>
+        <Pressable
+          style={[
+            styles.secondaryButton,
+            {
+              backgroundColor: currentTheme.button,
+              borderColor: currentTheme.border,
+            },
+          ]}
+          onPress={speakText}
+        >
           <Text style={styles.secondaryButtonText}>Speak Translation</Text>
         </Pressable>
       </View>
 
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: currentTheme.card,
+            borderColor: currentTheme.border,
+          },
+        ]}
+      >
         <View style={styles.historyHeader}>
-          <Text style={styles.sectionTitle}>Translation History</Text>
+          <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+            Translation History
+          </Text>
           <Pressable onPress={clearHistory}>
             <Text style={styles.clearText}>Clear</Text>
           </Pressable>
@@ -125,11 +205,24 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={true}
         >
           {history.length === 0 ? (
-            <Text style={styles.emptyHistory}>No translations yet.</Text>
+            <Text style={[styles.emptyHistory, { color: currentTheme.mutedText }]}>
+              No translations yet.
+            </Text>
           ) : (
             history.map((item, index) => (
-              <View key={index} style={styles.historyItem}>
-                <Text style={styles.historyText}>{item}</Text>
+              <View
+                key={index}
+                style={[
+                  styles.historyItem,
+                  {
+                    backgroundColor: currentTheme.background,
+                    borderColor: currentTheme.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.historyText, { color: currentTheme.text }]}>
+                  {item}
+                </Text>
               </View>
             ))
           )}
@@ -142,32 +235,28 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: "white",
   },
 
   pageContent: {
-    paddingBottom: 30,
+    paddingHorizontal: 20,
   },
 
   header: {
-    paddingTop: 80,
-    paddingHorizontal: 30,
-    paddingBottom: 30,
-    backgroundColor: "lightblue",
-    borderBottomWidth: 2,
-    borderBottomColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
   },
 
   title: {
-    color: "black",
-    fontSize: 40,
+    fontSize: 34,
+    fontWeight: "bold",
     textAlign: "center",
     marginBottom: 8,
   },
 
   subtitle: {
-    color: "black",
-    fontSize: 20,
+    fontSize: 16,
     textAlign: "center",
   },
 
@@ -176,34 +265,28 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "white",
   },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "black",
     marginBottom: 10,
   },
 
   input: {
     minHeight: 90,
     borderWidth: 1,
-    backgroundColor: "white",
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
     fontSize: 20,
-    color: "black",
   },
 
   primaryButton: {
-    backgroundColor: "black",
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
@@ -216,29 +299,24 @@ const styles = StyleSheet.create({
   },
 
   resultBox: {
-    backgroundColor: "white",
     borderRadius: 8,
     padding: 12,
     minHeight: 50,
     justifyContent: "center",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "lightgray",
   },
 
   resultText: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "black",
   },
 
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "white",
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
-    backgroundColor: "black",
   },
 
   secondaryButtonText: {
@@ -260,7 +338,6 @@ const styles = StyleSheet.create({
   },
 
   emptyHistory: {
-    color: "gray",
     fontSize: 16,
     paddingVertical: 12,
   },
@@ -271,16 +348,13 @@ const styles = StyleSheet.create({
   },
 
   historyItem: {
-    backgroundColor: "white",
     padding: 12,
     borderRadius: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "lightgray",
   },
 
   historyText: {
     fontSize: 16,
-    color: "black",
   },
 });

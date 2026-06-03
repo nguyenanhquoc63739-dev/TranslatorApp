@@ -3,16 +3,20 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/components/AppThemeContext';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { currentTheme } = useAppTheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: currentTheme.text,
+        tabBarInactiveTintColor: currentTheme.mutedText,
+        tabBarStyle: {
+          backgroundColor: currentTheme.background,
+          borderTopColor: currentTheme.border,
+        },
         headerShown: false,
         tabBarButton: HapticTab,
       }}>
@@ -28,6 +32,13 @@ export default function TabLayout() {
         options={{
           title: 'Setting',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="NotificationsManager"
+        options={{
+          title: 'Notify',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="bell.fill" color={color} />,
         }}
       />
     </Tabs>

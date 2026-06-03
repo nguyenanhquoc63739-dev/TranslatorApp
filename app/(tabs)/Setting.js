@@ -1,16 +1,22 @@
-import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppTheme } from "../../components/AppThemeContext";
 import BatteryInfo from "../../components/BatteryInfo";
-import { Colors, defaultTheme } from "../../constants/app-theme";
 
 export default function SettingScreen() {
-  const [theme, setTheme] = useState(defaultTheme);
-  const currentTheme = Colors[theme];
+  const insets = useSafeAreaInsets();
+  const { theme, setTheme, currentTheme } = useAppTheme();
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: currentTheme.background }]}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingTop: insets.top + 28,
+          paddingBottom: insets.bottom + 24,
+        },
+      ]}
     >
       <Text style={[styles.heading, { color: currentTheme.text }]}>
         Settings
@@ -42,10 +48,7 @@ export default function SettingScreen() {
               style={[
                 styles.buttonText,
                 {
-                  color:
-                    theme === "light"
-                      ? "#ffffff"
-                      : currentTheme.text,
+                  color: theme === "light" ? "#ffffff" : currentTheme.text,
                 },
               ]}
             >
@@ -70,10 +73,7 @@ export default function SettingScreen() {
               style={[
                 styles.buttonText,
                 {
-                  color:
-                    theme === "dark"
-                      ? "#ffffff"
-                      : currentTheme.text,
+                  color: theme === "dark" ? "#ffffff" : currentTheme.text,
                 },
               ]}
             >
@@ -88,15 +88,6 @@ export default function SettingScreen() {
           Device Information
         </Text>
         <BatteryInfo themeColors={currentTheme} />
-      </View>
-
-      <View style={[styles.section, { backgroundColor: currentTheme.card }]}>
-        <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
-          Notifications
-        </Text>
-        <Text style={[styles.description, { color: currentTheme.text }]}>
-          Study reminder notifications will be added here later.
-        </Text>
       </View>
     </ScrollView>
   );

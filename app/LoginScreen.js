@@ -9,13 +9,13 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Colors, defaultTheme } from "../constants/app-theme";
+import { useAppTheme } from "../components/AppThemeContext";
 import { auth } from "./firebase/FirebaseConfig";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const currentTheme = Colors[defaultTheme];
+  const { currentTheme } = useAppTheme();
 
   const getLoginErrorMessage = (error) => {
     if (
@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
+    color: "#ffffff",
     fontWeight: "bold",
     fontSize: 16,
   },

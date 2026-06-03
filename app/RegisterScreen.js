@@ -9,14 +9,14 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Colors, defaultTheme } from "../constants/app-theme";
+import { useAppTheme } from "../components/AppThemeContext";
 import { auth } from "./firebase/FirebaseConfig";
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const currentTheme = Colors[defaultTheme];
+  const { currentTheme } = useAppTheme();
 
   const getRegisterErrorMessage = (error) => {
     if (error.code === "auth/email-already-in-use") {
@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
+    color: "#ffffff",
     fontSize: 16,
     fontWeight: "bold",
   },

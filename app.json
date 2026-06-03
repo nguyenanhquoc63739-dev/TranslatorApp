@@ -9,7 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Translator uses your location to show your GPS position on the map.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Translator uses background location for the task manager GPS feature.",
+        "NSLocationAlwaysUsageDescription": "Translator uses background location for the task manager GPS feature.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +28,13 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.quocnguyen24.translatorapp"
+      "package": "com.quocnguyen24.translatorapp",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,6 +54,15 @@
           }
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Translator to use your location to show your GPS position on the map.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Translator to use your location for GPS task manager tracking.",
+          "locationAlwaysPermission": "Allow Translator to use your location for GPS task manager tracking."
+        }
+      ],
+      "expo-notifications",
       "expo-sqlite"
     ],
     "experiments": {
