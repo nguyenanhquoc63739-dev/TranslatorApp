@@ -11,11 +11,9 @@ import {
   Text,
   View,
 } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 const LOCATION_TASK_NAME = "translator-background-location-task";
-
-const MapComponents =
-  Platform.OS === "web" ? null : require("react-native-maps");
 
 TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
   if (error) {
@@ -51,6 +49,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
 
   useEffect(() => {
     let subscription;
+    let isMounted = true;
 
     if (isTracking) {
       Location.watchPositionAsync(
@@ -60,12 +59,22 @@ export default function LocationTaskManager({ themeColors, themeName }) {
           distanceInterval: 5,
         },
         (newLocation) => setLocation(newLocation.coords),
-      ).then((watcher) => {
-        subscription = watcher;
-      });
+      )
+        .then((watcher) => {
+          if (isMounted) {
+            subscription = watcher;
+          } else {
+            watcher.remove();
+          }
+        })
+        .catch((error) => {
+          console.error("Watch location error:", error);
+          setTaskStatus("GPS active. Live updates could not start.");
+        });
     }
 
     return () => {
+      isMounted = false;
       subscription?.remove();
     };
   }, [isTracking]);
@@ -82,7 +91,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
   };
 
   const startBackgroundLocationTask = async () => {
-    if (Platform.OS === "web" || isRunningInExpoGo()) {
+    if (isRunningInExpoGo()) {
       setTaskStatus("GPS active. Background task needs a development build.");
       return;
     }
@@ -113,7 +122,6 @@ export default function LocationTaskManager({ themeColors, themeName }) {
           notificationTitle: "Translator GPS is active",
           notificationBody: "Location task manager is tracking your GPS.",
         },
-        showsBackgroundLocationIndicator: true,
       });
     }
 
@@ -134,7 +142,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
         accuracy: Location.Accuracy.High,
       });
       setLocation(currentLocation.coords);
-      setIsTracking(Platform.OS !== "web");
+      setIsTracking(true);
       setTaskStatus("GPS active");
 
       try {
@@ -155,8 +163,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
 
   const stopLocationTask = async () => {
     try {
-      const taskManagerAvailable =
-        Platform.OS !== "web" && (await TaskManager.isAvailableAsync());
+      const taskManagerAvailable = await TaskManager.isAvailableAsync();
       const isRegistered =
         taskManagerAvailable &&
         (await TaskManager.isTaskRegisteredAsync(LOCATION_TASK_NAME));
@@ -169,6 +176,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
     }
 
     setIsTracking(false);
+    setLocation(null);
     setTaskStatus("Stopped");
     Alert.alert("Stopped", "GPS tracking has stopped.");
   };
@@ -179,51 +187,11 @@ export default function LocationTaskManager({ themeColors, themeName }) {
     }
 
     const url = Platform.select({
-      ios: `maps://?q=${location.latitude},${location.longitude}`,
       android: `geo:${location.latitude},${location.longitude}?q=${location.latitude},${location.longitude}`,
       default: `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`,
     });
 
     Linking.openURL(url);
-  };
-
-  const renderMap = () => {
-    if (!location) {
-      return (
-        <View style={[styles.emptyMap, { borderColor: themeColors.border }]}>
-          <Text style={[styles.description, { color: themeColors.mutedText }]}>
-            Start GPS to show the map.
-          </Text>
-        </View>
-      );
-    }
-
-    if (!MapComponents) {
-      return (
-        <Pressable
-          style={[styles.emptyMap, { borderColor: themeColors.border }]}
-          onPress={openDeviceMap}
-        >
-          <Text style={[styles.description, { color: themeColors.mutedText }]}>
-            Open your location in Google Maps.
-          </Text>
-        </Pressable>
-      );
-    }
-
-    const MapView = MapComponents.default;
-    const { Marker } = MapComponents;
-
-    return (
-      <MapView
-        style={styles.map}
-        region={mapRegion}
-        showsUserLocation
-        userInterfaceStyle={themeName}
-      >
-        <Marker coordinate={location} title="Current GPS Location" />
-      </MapView>
-    );
   };
 
   return (
@@ -275,7 +243,22 @@ export default function LocationTaskManager({ themeColors, themeName }) {
         </View>
       )}
 
-      {renderMap()}
+      {location ? (
+        <MapView
+          style={styles.map}
+          region={mapRegion}
+          showsUserLocation
+          userInterfaceStyle={themeName}
+        >
+          <Marker coordinate={location} title="Current GPS Location" />
+        </MapView>
+      ) : (
+        <View style={[styles.emptyMap, { borderColor: themeColors.border }]}>
+          <Text style={[styles.description, { color: themeColors.mutedText }]}>
+            Start GPS to show the map.
+          </Text>
+        </View>
+      )}
 
       {location && (
         <Pressable
