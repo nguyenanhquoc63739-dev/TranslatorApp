@@ -6,13 +6,15 @@ import {
 } from "expo-battery";
 import { StyleSheet, Text, View } from "react-native";
 
-export default function BatteryInfo() {
+export default function BatteryInfo({ themeColors }) {
   const batteryLevel = useBatteryLevel();
   const batteryState = useBatteryState();
   const lowPowerMode = useLowPowerMode();
 
   const batteryPercent =
-    batteryLevel >= 0 ? Math.round(batteryLevel * 100) + "%" : "Unknown";
+    typeof batteryLevel === "number" && batteryLevel >= 0
+      ? Math.round(batteryLevel * 100) + "%"
+      : "Unknown";
 
   const getBatteryStateText = () => {
     if (batteryState === BatteryState.UNPLUGGED) return "Unplugged";
@@ -22,25 +24,47 @@ export default function BatteryInfo() {
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>Device Battery Information</Text>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: themeColors.background,
+          borderColor: themeColors.border,
+        },
+      ]}
+    >
+      <Text style={[styles.title, { color: themeColors.text }]}>
+        Device Battery Information
+      </Text>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Battery Level</Text>
-        <Text style={styles.value}>{batteryPercent}</Text>
+        <Text style={[styles.label, { color: themeColors.text }]}>
+          Battery Level
+        </Text>
+        <Text style={[styles.value, { color: themeColors.text }]}>
+          {batteryPercent}
+        </Text>
       </View>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Battery State</Text>
-        <Text style={styles.value}>{getBatteryStateText()}</Text>
+        <Text style={[styles.label, { color: themeColors.text }]}>
+          Battery State
+        </Text>
+        <Text style={[styles.value, { color: themeColors.text }]}>
+          {getBatteryStateText()}
+        </Text>
       </View>
 
       <View style={styles.row}>
-        <Text style={styles.label}>Low Power Mode</Text>
-        <Text style={styles.value}>{lowPowerMode ? "On" : "Off"}</Text>
+        <Text style={[styles.label, { color: themeColors.text }]}>
+          Low Power Mode
+        </Text>
+        <Text style={[styles.value, { color: themeColors.text }]}>
+          {lowPowerMode ? "On" : "Off"}
+        </Text>
       </View>
 
-      <Text style={styles.note}>
+      <Text style={[styles.note, { color: themeColors.mutedText }]}>
         This information is collected from the device using Expo Battery.
       </Text>
     </View>
@@ -52,7 +76,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 12,
     borderRadius: 12,
-    backgroundColor: "#f5f7fa",
+    borderWidth: 1,
   },
   title: {
     fontSize: 18,
@@ -74,6 +98,5 @@ const styles = StyleSheet.create({
   note: {
     fontSize: 13,
     marginTop: 10,
-    color: "#555",
   },
 });

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import BatteryInfo from "./BatteryInfo";
-import { Colors, defaultTheme } from "./ThemeColor";
+import BatteryInfo from "../../components/BatteryInfo";
+import { Colors, defaultTheme } from "../../constants/app-theme";
 
 export default function SettingScreen() {
   const [theme, setTheme] = useState(defaultTheme);
@@ -30,12 +30,27 @@ export default function SettingScreen() {
               styles.themeButton,
               {
                 backgroundColor:
-                  theme === "light" ? currentTheme.button : "white",
+                  theme === "light"
+                    ? currentTheme.button
+                    : currentTheme.background,
+                borderColor: currentTheme.border,
               },
             ]}
             onPress={() => setTheme("light")}
           >
-            <Text style={styles.buttonText}>Light Mode</Text>
+            <Text
+              style={[
+                styles.buttonText,
+                {
+                  color:
+                    theme === "light"
+                      ? "#ffffff"
+                      : currentTheme.text,
+                },
+              ]}
+            >
+              Light Mode
+            </Text>
           </Pressable>
 
           <Pressable
@@ -43,12 +58,27 @@ export default function SettingScreen() {
               styles.themeButton,
               {
                 backgroundColor:
-                  theme === "dark" ? currentTheme.button : "white",
+                  theme === "dark"
+                    ? currentTheme.button
+                    : currentTheme.background,
+                borderColor: currentTheme.border,
               },
             ]}
             onPress={() => setTheme("dark")}
           >
-            <Text style={styles.buttonText}>Dark Mode</Text>
+            <Text
+              style={[
+                styles.buttonText,
+                {
+                  color:
+                    theme === "dark"
+                      ? "#ffffff"
+                      : currentTheme.text,
+                },
+              ]}
+            >
+              Dark Mode
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -57,7 +87,7 @@ export default function SettingScreen() {
         <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
           Device Information
         </Text>
-        <BatteryInfo />
+        <BatteryInfo themeColors={currentTheme} />
       </View>
 
       <View style={[styles.section, { backgroundColor: currentTheme.card }]}>
@@ -107,9 +137,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
+    borderWidth: 1,
   },
   buttonText: {
-    color: "white",
     fontWeight: "bold",
   },
 });
