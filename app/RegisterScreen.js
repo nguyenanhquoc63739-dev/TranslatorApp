@@ -74,6 +74,15 @@ export default function RegisterScreen() {
     <View
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
+      <Pressable
+        style={styles.backButton}
+        onPress={() => router.replace("/Setting")}
+      >
+        <Text style={[styles.backText, { color: currentTheme.text }]}>
+          Back to Settings
+        </Text>
+      </Pressable>
+
       <Text style={[styles.title, { color: currentTheme.text }]}>
         Create Account
       </Text>
@@ -150,6 +159,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  backButton: {
+    position: "absolute",
+    top: 60,
+    left: 20,
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   title: {
     fontSize: 28,

@@ -30,10 +30,6 @@ export default function LoginScreen() {
       return "Please enter a valid email address.";
     }
 
-    if (error.code === "auth/network-request-failed") {
-      return "Network error. Please check your internet connection and try again.";
-    }
-
     return error.message || "Could not login. Please try again.";
   };
 
@@ -48,7 +44,7 @@ export default function LoginScreen() {
     try {
       await signInWithEmailAndPassword(auth, cleanEmail, password);
       Alert.alert("Success", "You have been logged in.");
-      router.replace("/HomeScreen");
+      router.replace("/Setting");
     } catch (error) {
       console.error("Login error:", error);
       Alert.alert("Error", getLoginErrorMessage(error));
@@ -59,6 +55,15 @@ export default function LoginScreen() {
     <View
       style={[styles.container, { backgroundColor: currentTheme.background }]}
     >
+      <Pressable
+        style={styles.backButton}
+        onPress={() => router.replace("/Setting")}
+      >
+        <Text style={[styles.backText, { color: currentTheme.text }]}>
+          Back to Settings
+        </Text>
+      </Pressable>
+
       <Text style={[styles.title, { color: currentTheme.text }]}>
         Welcome Back
       </Text>
@@ -100,9 +105,7 @@ export default function LoginScreen() {
         style={[styles.button, { backgroundColor: currentTheme.button }]}
         onPress={emailLogin}
       >
-        <Text style={styles.buttonText}>
-          Login
-        </Text>
+        <Text style={styles.buttonText}>Login</Text>
       </Pressable>
 
       <Pressable onPress={() => router.push("/RegisterScreen")}>
@@ -119,6 +122,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
+  },
+  backButton: {
+    position: "absolute",
+    top: 60,
+    left: 20,
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   title: {
     fontSize: 28,

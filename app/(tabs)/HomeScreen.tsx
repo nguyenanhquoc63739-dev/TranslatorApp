@@ -1,14 +1,4 @@
 import * as Speech from "expo-speech";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
-} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   Pressable,
@@ -20,7 +10,17 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../components/AppThemeContext";
-import { auth, db } from "../firebase/FirebaseConfig";
+import {
+  clearLocalHistoryItems,
+  loadLocalHistoryItems,
+  saveLocalHistoryItem,
+} from "../database/LocalHistoryStore";
+import { auth } from "../firebase/FirebaseConfig";
+import {
+  clearHistoryItems,
+  listenToHistory,
+  saveHistoryItem,
+} from "../firebase/TranslationHistoryStore";
 
 type TranslationHistoryItem = {
   id: string;
@@ -37,32 +37,22 @@ export default function HomeScreen() {
   const user = auth.currentUser;
 
   useEffect(() => {
+    loadLocalHistoryItems()
+      .then(setHistory)
+      .catch((error) => {
+        console.error("Load SQLite history error:", error);
+      });
+  }, []);
+
+  useEffect(() => {
     if (!user) {
-      setHistory([]);
       return undefined;
     }
 
-    const historyQuery = query(
-      collection(db, "users", user.uid, "translationHistory"),
-      orderBy("createdAt", "desc"),
-    );
-
-    const unsubscribe = onSnapshot(
-      historyQuery,
-      (snapshot) => {
-        const historyItems = snapshot.docs.map((historyDoc) => {
-          const data = historyDoc.data();
-
-          return {
-            id: historyDoc.id,
-            originalText: data.originalText || "",
-            translatedText: data.translatedText || "",
-          };
-        });
-
-        setHistory(historyItems);
-      },
-      (error) => {
+    const unsubscribe = listenToHistory(
+      user.uid,
+      setHistory,
+      (error: unknown) => {
         console.error("Load history error:", error);
       },
     );
@@ -73,7 +63,22 @@ export default function HomeScreen() {
   const saveTranslationHistory = async (originalText: string, result: string) => {
     const currentUser = auth.currentUser;
 
+    try {
+      await saveLocalHistoryItem(originalText, result);
+      const localHistory = await loadLocalHistoryItems();
+      setHistory(localHistory);
+    } catch (error) {
+      console.error("Save SQLite history error:", error);
+    }
+
     if (!currentUser) {
+      return;
+    }
+
+    try {
+      await saveHistoryItem(currentUser.uid, originalText, result);
+    } catch (error) {
+      console.error("Save history error:", error);
       setHistory((oldHistory) => [
         {
           id: Date.now().toString(),
@@ -82,17 +87,7 @@ export default function HomeScreen() {
         },
         ...oldHistory,
       ]);
-      return;
     }
-
-    await addDoc(
-      collection(db, "users", currentUser.uid, "translationHistory"),
-      {
-        originalText,
-        translatedText: result,
-        createdAt: serverTimestamp(),
-      },
-    );
   };
 
   const translateText = async () => {
@@ -148,19 +143,19 @@ export default function HomeScreen() {
   const clearHistory = async () => {
     const currentUser = auth.currentUser;
 
-    if (!currentUser) {
+    try {
+      await clearLocalHistoryItems();
       setHistory([]);
+    } catch (error) {
+      console.error("Clear SQLite history error:", error);
+    }
+
+    if (!currentUser) {
       return;
     }
 
     try {
-      await Promise.all(
-        history.map((item) =>
-          deleteDoc(
-            doc(db, "users", currentUser.uid, "translationHistory", item.id),
-          ),
-        ),
-      );
+      await clearHistoryItems(currentUser.uid, history);
     } catch (error) {
       console.error("Clear history error:", error);
     }

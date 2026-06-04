@@ -7,7 +7,7 @@ import { AppThemeProvider } from '@/components/AppThemeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
-  initialRouteName: 'LoginScreen',
+  initialRouteName: '(tabs)',
 };
 
 export default function RootLayout() {

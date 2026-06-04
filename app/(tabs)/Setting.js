@@ -1,6 +1,8 @@
+import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../components/AppThemeContext";
+import AdBanner from "../../components/AdBanner";
 import BarcodeScanner from "../../components/BarcodeScanner";
 import BatteryInfo from "../../components/BatteryInfo";
 
@@ -86,6 +88,47 @@ export default function SettingScreen() {
 
       <View style={[styles.section, { backgroundColor: currentTheme.card }]}>
         <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          Account
+        </Text>
+        <Text style={[styles.description, { color: currentTheme.text }]}>
+          Your data is stored locally and not shared with anyone, but logging in
+          allows you to sync across devices and access your history from
+          anywhere.
+        </Text>
+
+        <View style={styles.buttonRow}>
+          <Pressable
+            style={[
+              styles.themeButton,
+              {
+                backgroundColor: currentTheme.button,
+                borderColor: currentTheme.border,
+              },
+            ]}
+            onPress={() => router.push("/LoginScreen")}
+          >
+            <Text style={[styles.buttonText, { color: "#ffffff" }]}>Login</Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              styles.themeButton,
+              {
+                backgroundColor: currentTheme.background,
+                borderColor: currentTheme.border,
+              },
+            ]}
+            onPress={() => router.push("/RegisterScreen")}
+          >
+            <Text style={[styles.buttonText, { color: currentTheme.text }]}>
+              Register
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={[styles.section, { backgroundColor: currentTheme.card }]}>
+        <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
           Device Information
         </Text>
         <BatteryInfo themeColors={currentTheme} />
@@ -97,6 +140,8 @@ export default function SettingScreen() {
         </Text>
         <BarcodeScanner themeColors={currentTheme} />
       </View>
+
+      <AdBanner />
     </ScrollView>
   );
 }
