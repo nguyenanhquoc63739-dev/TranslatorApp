@@ -1,5 +1,15 @@
 import * as Speech from "expo-speech";
-import React, { useState } from "react";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -10,13 +20,80 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../components/AppThemeContext";
+import { auth, db } from "../firebase/FirebaseConfig";
+
+type TranslationHistoryItem = {
+  id: string;
+  originalText: string;
+  translatedText: string;
+};
 
 export default function HomeScreen() {
   const [inputText, setInputText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
+  const [history, setHistory] = useState<TranslationHistoryItem[]>([]);
   const insets = useSafeAreaInsets();
   const { currentTheme } = useAppTheme();
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (!user) {
+      setHistory([]);
+      return undefined;
+    }
+
+    const historyQuery = query(
+      collection(db, "users", user.uid, "translationHistory"),
+      orderBy("createdAt", "desc"),
+    );
+
+    const unsubscribe = onSnapshot(
+      historyQuery,
+      (snapshot) => {
+        const historyItems = snapshot.docs.map((historyDoc) => {
+          const data = historyDoc.data();
+
+          return {
+            id: historyDoc.id,
+            originalText: data.originalText || "",
+            translatedText: data.translatedText || "",
+          };
+        });
+
+        setHistory(historyItems);
+      },
+      (error) => {
+        console.error("Load history error:", error);
+      },
+    );
+
+    return unsubscribe;
+  }, [user]);
+
+  const saveTranslationHistory = async (originalText: string, result: string) => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      setHistory((oldHistory) => [
+        {
+          id: Date.now().toString(),
+          originalText,
+          translatedText: result,
+        },
+        ...oldHistory,
+      ]);
+      return;
+    }
+
+    await addDoc(
+      collection(db, "users", currentUser.uid, "translationHistory"),
+      {
+        originalText,
+        translatedText: result,
+        createdAt: serverTimestamp(),
+      },
+    );
+  };
 
   const translateText = async () => {
     const cleanText = inputText.trim();
@@ -48,8 +125,7 @@ export default function HomeScreen() {
         }
 
         setTranslatedText(result);
-
-        setHistory((oldHistory) => [`${cleanText} → ${result}`, ...oldHistory]);
+        await saveTranslationHistory(cleanText, result);
       } else {
         setTranslatedText(
           data.responseDetails || "Translation failed. Please try again.",
@@ -69,8 +145,25 @@ export default function HomeScreen() {
     }
   };
 
-  const clearHistory = () => {
-    setHistory([]);
+  const clearHistory = async () => {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      setHistory([]);
+      return;
+    }
+
+    try {
+      await Promise.all(
+        history.map((item) =>
+          deleteDoc(
+            doc(db, "users", currentUser.uid, "translationHistory", item.id),
+          ),
+        ),
+      );
+    } catch (error) {
+      console.error("Clear history error:", error);
+    }
   };
 
   return (
@@ -209,9 +302,9 @@ export default function HomeScreen() {
               No translations yet.
             </Text>
           ) : (
-            history.map((item, index) => (
+            history.map((item) => (
               <View
-                key={index}
+                key={item.id}
                 style={[
                   styles.historyItem,
                   {
@@ -221,7 +314,7 @@ export default function HomeScreen() {
                 ]}
               >
                 <Text style={[styles.historyText, { color: currentTheme.text }]}>
-                  {item}
+                  {item.originalText} → {item.translatedText}
                 </Text>
               </View>
             ))
