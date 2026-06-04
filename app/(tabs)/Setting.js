@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAppTheme } from "../../components/AppThemeContext";
+import BarcodeScanner from "../../components/BarcodeScanner";
 import BatteryInfo from "../../components/BatteryInfo";
 
 export default function SettingScreen() {
@@ -88,6 +89,13 @@ export default function SettingScreen() {
           Device Information
         </Text>
         <BatteryInfo themeColors={currentTheme} />
+      </View>
+
+      <View style={[styles.section, { backgroundColor: currentTheme.card }]}>
+        <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          Barcode Scanner
+        </Text>
+        <BarcodeScanner themeColors={currentTheme} />
       </View>
     </ScrollView>
   );

@@ -4,14 +4,12 @@ import * as TaskManager from "expo-task-manager";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  Linking,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Circle, Marker } from "react-native-maps";
 
 const LOCATION_TASK_NAME = "translator-background-location-task";
 
@@ -54,9 +52,9 @@ export default function LocationTaskManager({ themeColors, themeName }) {
     if (isTracking) {
       Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000,
-          distanceInterval: 5,
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 3000,
+          distanceInterval: 3,
         },
         (newLocation) => setLocation(newLocation.coords),
       )
@@ -88,6 +86,11 @@ export default function LocationTaskManager({ themeColors, themeName }) {
     }
 
     return true;
+  };
+
+  const makeLocationActive = (coords) => {
+    setLocation(coords);
+    setIsTracking(true);
   };
 
   const startBackgroundLocationTask = async () => {
@@ -138,11 +141,36 @@ export default function LocationTaskManager({ themeColors, themeName }) {
         return;
       }
 
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+
+      if (!servicesEnabled) {
+        Alert.alert(
+          "GPS is off",
+          "Please turn on Location Services, then try Start GPS again.",
+        );
+        setTaskStatus("GPS is turned off on this device.");
+        return;
+      }
+
+      setTaskStatus("Checking last known GPS...");
+
+      const lastKnownLocation = await Location.getLastKnownPositionAsync({
+        maxAge: 60000,
+        requiredAccuracy: 1000,
       });
-      setLocation(currentLocation.coords);
-      setIsTracking(true);
+
+      if (lastKnownLocation?.coords) {
+        makeLocationActive(lastKnownLocation.coords);
+        setTaskStatus("Showing saved GPS. Refreshing current location...");
+      } else {
+        setTaskStatus("Getting current GPS...");
+      }
+
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        mayShowUserSettingsDialog: true,
+      });
+      makeLocationActive(currentLocation.coords);
       setTaskStatus("GPS active");
 
       try {
@@ -151,11 +179,13 @@ export default function LocationTaskManager({ themeColors, themeName }) {
         console.error("Background location task error:", taskError);
         setTaskStatus("GPS active. Background task could not start.");
       }
-
-      Alert.alert("Success", "GPS tracking started.");
     } catch (error) {
       console.error("Location task error:", error);
-      Alert.alert("Error", "Could not start GPS tracking.");
+      setTaskStatus("GPS could not start.");
+      Alert.alert(
+        "GPS error",
+        "Could not get your location. Please check permission and Location Services.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -181,18 +211,7 @@ export default function LocationTaskManager({ themeColors, themeName }) {
     Alert.alert("Stopped", "GPS tracking has stopped.");
   };
 
-  const openDeviceMap = () => {
-    if (!location) {
-      return;
-    }
-
-    const url = Platform.select({
-      android: `geo:${location.latitude},${location.longitude}?q=${location.latitude},${location.longitude}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`,
-    });
-
-    Linking.openURL(url);
-  };
+  const accuracyRadius = Math.max(location?.accuracy ?? 50, 30);
 
   return (
     <View
@@ -251,6 +270,12 @@ export default function LocationTaskManager({ themeColors, themeName }) {
           userInterfaceStyle={themeName}
         >
           <Marker coordinate={location} title="Current GPS Location" />
+          <Circle
+            center={location}
+            radius={accuracyRadius}
+            strokeColor={themeColors.button}
+            fillColor={`${themeColors.button}22`}
+          />
         </MapView>
       ) : (
         <View style={[styles.emptyMap, { borderColor: themeColors.border }]}>
@@ -258,17 +283,6 @@ export default function LocationTaskManager({ themeColors, themeName }) {
             Start GPS to show the map.
           </Text>
         </View>
-      )}
-
-      {location && (
-        <Pressable
-          style={[styles.mapButton, { borderColor: themeColors.border }]}
-          onPress={openDeviceMap}
-        >
-          <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>
-            Open in Maps
-          </Text>
-        </Pressable>
       )}
 
       <Text style={[styles.status, { color: themeColors.mutedText }]}>
@@ -338,13 +352,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 14,
     padding: 16,
-  },
-  mapButton: {
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: "center",
-    marginTop: 10,
   },
   status: {
     marginTop: 12,
